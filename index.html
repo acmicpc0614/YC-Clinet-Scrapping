@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Export to Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <!-- <script src="scraper.js"></script> -->
+    <script src="profiles.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      button {
+        padding: 10px;
+        margin: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Export Data to Excel</h1>
+    <button onclick="main()">Export to Excel</button>
+  </body>
+  <script>
+    const BASE_URL =
+      "https://www.startupschool.org/cofounder-matching/candidate/";
+    const LastSeenDay = 15;
+
+    const haveFunding = (data) => {
+      return data.startup.funding !== "N/A" && data.startup.funding !== "";
+    };
+
+    const howLongtimeSee = (data) => {
+      let flag = false;
+      const time = data.lastSeen;
+      if (time.includes("month")) return false;
+      if (time.includes("hour") || time.includes("today")) return true;
+      if (time.includes("days ago")) {
+        const timeArr = time.split(" ");
+        const timeNum = parseInt(timeArr[0]);
+        if (timeNum > LastSeenDay) return false;
+        return true;
+      }
+    };
+
+    const whichcountry = (data) => {
+      const location = data.location;
+      if (location.includes("India")) return false;
+      if (location.includes("Nigeria")) return false;
+      if (location.includes("Kenya")) return false;
+      if (location.includes("Pakistan")) return false;
+      if (location.includes("Philippines")) return false;
+      if (location.includes("Tanzania")) return false;
+      if (location.includes("Egypt")) return false;
+      return true;
+    };
+
+    let filterdData = [];
+
+    const main = () => {
+      console.log("start");
+      console.log(TestData.length);
+
+      // TestData.((dataitem) => {
+      for (const dataitem of TestData) {
+        if (howLongtimeSee(dataitem) && haveFunding(dataitem) && whichcountry(dataitem)) {
+          // if (haveFunding(dataitem)) {
+          let out = {};
+          out.link = BASE_URL + dataitem.userId;
+          // out.name = dataitem.name;
+          out.equity = dataitem.cofounderPreferences.equity;
+          out.lastSeen = dataitem.lastSeen;
+          out.location = dataitem.location;
+          out.startupName = dataitem.startup.name;
+          out.startupDescription = dataitem.startup.description;
+          out.startupProgress = dataitem.startup.progress;
+          out.startupFunding = dataitem.startup.funding;
+          out.sumary = dataitem.sumary;
+          filterdData.push(out);
+        }
+      }
+      console.log("Length is : ", filterdData.length);
+      const ws = XLSX.utils.json_to_sheet(filterdData);
+
+      // Create a new workbook
+      const wb = XLSX.utils.book_new();
+
+      // Append the worksheet to the workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+      // Export the workbook
+      XLSX.writeFile(wb, "Filtereddata.xlsx");
+    };
+  </script>
+</html>
